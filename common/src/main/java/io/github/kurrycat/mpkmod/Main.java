@@ -169,13 +169,13 @@ public class Main implements MPKModule {
                             Profiler.startSection("calculateLBOffsets");
                             LandingBlockGuiScreen.calculateLBOffsets()
                                     .forEach(offset -> {
-                                        if (mainGUI != null)
-                                            mainGUI.postMessage(
-                                                    "offset",
-                                                    MathUtil.formatDecimals(offset.getX(), 5, false) +
-                                                            ", " + MathUtil.formatDecimals(offset.getZ(), 5, false),
-                                                    offset.getX() > 0 && offset.getZ() > 0
-                                            );
+                                        if (mainGUI == null) return;
+                                        double total = LandingBlock.totalOffset(offset);
+                                        mainGUI.postMessage(
+                                                "offset",
+                                                MathUtil.formatDecimals(total, 5, false),
+                                                total > 0
+                                        );
                                     });
                             Profiler.endSection();
                             Profiler.startSection("tickInputHistories");
