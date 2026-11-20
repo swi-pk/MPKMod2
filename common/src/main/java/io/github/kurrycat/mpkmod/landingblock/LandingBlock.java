@@ -216,8 +216,15 @@ public class LandingBlock {
 
             switch (this) {
                 case Z_NEO:
+                    // X from the tick before landing, Z from the tick before that
                     if (Player.getBeforeLatest() == null) return null;
-                    return Player.getBeforeLatest().getLastBoundingBox();
+                    BoundingBox3D xBB = Player.getLatest().getLastBoundingBox();
+                    BoundingBox3D zBB = Player.getBeforeLatest().getLastBoundingBox();
+                    if (xBB == null || zBB == null) return null;
+                    return new BoundingBox3D(
+                            new Vector3D(xBB.minX(), xBB.minY(), zBB.minZ()),
+                            new Vector3D(xBB.maxX(), xBB.maxY(), zBB.maxZ())
+                    );
                 case HIT:
                 case ENTER:
                     return Player.getLatest().getBoundingBox();
