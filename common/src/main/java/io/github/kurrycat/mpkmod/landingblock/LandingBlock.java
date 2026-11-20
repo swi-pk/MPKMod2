@@ -117,12 +117,16 @@ public class LandingBlock {
     static double axisOffset(double lbMin, double lbMax, double pMin, double pMax, double adjMin, double adjMax) {
         double fromMin = pMax - lbMin + adjMin;
         double fromMax = lbMax - pMin + adjMax;
-        double offset;
-        if (fromMax > Math.abs(fromMin)) offset = fromMin;
-        else if (fromMin > Math.abs(fromMax)) offset = fromMax;
-        else offset = Math.max(fromMin, fromMax);
-        // Floating point noise must not turn a flush 0 into a tiny miss
-        return Math.abs(offset) < EPS ? 0 : offset;
+        boolean minLimits;
+        if (fromMax > Math.abs(fromMin)) minLimits = true;
+        else if (fromMin > Math.abs(fromMax)) minLimits = false;
+        else minLimits = fromMin >= fromMax;
+        double offset = minLimits ? fromMin : fromMax;
+
+        if (Math.abs(offset) >= EPS) return offset;
+        // 0 against a wall is fully on the block; 0 at an open edge only touches it and falls
+        boolean wall = (minLimits ? adjMin : adjMax) < 0;
+        return wall ? 0 : -EPS;
     }
 
     /**

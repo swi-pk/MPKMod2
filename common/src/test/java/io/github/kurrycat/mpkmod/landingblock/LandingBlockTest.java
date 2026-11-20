@@ -4,6 +4,7 @@ import io.github.kurrycat.mpkmod.util.Vector3D;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LandingBlockTest {
     private static final double DELTA = 1e-9;
@@ -35,6 +36,15 @@ public class LandingBlockTest {
         double offset = LandingBlock.axisOffset(-360, -359, z - 0.3, z + 0.3, -0.6, 0);
         assertEquals(0, offset);
         assertEquals(0.8, LandingBlock.totalOffset(new Vector3D(0.8, 0, offset)), DELTA);
+    }
+
+    @Test
+    void touchingOpenEdgeIsAMiss() {
+        // Right next to the block without a wall: the hitbox only touches the edge
+        double x = -236.3;
+        double offset = LandingBlock.axisOffset(-236, -235, x - 0.3, x + 0.3, 0, 0);
+        assertTrue(offset < 0);
+        assertTrue(LandingBlock.totalOffset(new Vector3D(offset, 0, 0.55712)) < 0);
     }
 
     @Test
