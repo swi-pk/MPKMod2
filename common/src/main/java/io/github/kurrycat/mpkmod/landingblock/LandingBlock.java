@@ -117,9 +117,12 @@ public class LandingBlock {
     static double axisOffset(double lbMin, double lbMax, double pMin, double pMax, double adjMin, double adjMax) {
         double fromMin = pMax - lbMin + adjMin;
         double fromMax = lbMax - pMin + adjMax;
-        if (fromMax > Math.abs(fromMin)) return fromMin;
-        if (fromMin > Math.abs(fromMax)) return fromMax;
-        return Math.max(fromMin, fromMax);
+        double offset;
+        if (fromMax > Math.abs(fromMin)) offset = fromMin;
+        else if (fromMin > Math.abs(fromMax)) offset = fromMax;
+        else offset = Math.max(fromMin, fromMax);
+        // Floating point noise must not turn a flush 0 into a tiny miss
+        return Math.abs(offset) < EPS ? 0 : offset;
     }
 
     /**
@@ -176,18 +179,14 @@ public class LandingBlock {
 
     /** Corner distance if both axes are on or both off the block, otherwise the missed axis' offset. */
     public static double totalOffset(Vector3D offset) {
-        double xSign = Math.signum(offset.getX());
-        double zSign = Math.signum(offset.getZ());
+        double x = offset.getX();
+        double z = offset.getZ();
 
-        if (xSign <= 0 && zSign >= 0) {
-            return offset.getX();
-        } else if (xSign >= 0 && zSign <= 0) {
-            return offset.getZ();
-        } else if (xSign <= 0 && zSign <= 0) {
-            return -offset.lengthXZ();
-        } else {
-            return offset.lengthXZ();
-        }
+        // Only a negative axis is missed, so 0 (flush against a wall) still lands
+        if (x < 0 && z < 0) return -offset.lengthXZ();
+        if (x < 0) return x;
+        if (z < 0) return z;
+        return offset.lengthXZ();
     }
 
     @Override
