@@ -55,6 +55,7 @@ public class MPKMod {
         API.registerFunctionHolder(new FunctionCompatibility());
         API.LOGGER.info(API.COMPATIBILITY_MARKER, "Done");
 
+        WindowsKeyTimer.start();
         MinecraftForge.EVENT_BUS.register(new EventListener());
         MinecraftForge.EVENT_BUS.register(this);
 

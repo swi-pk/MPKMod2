@@ -3,6 +3,7 @@ package io.github.kurrycat.mpkmod.compatibility.forge_1_8;
 import io.github.kurrycat.mpkmod.compatibility.API;
 import io.github.kurrycat.mpkmod.compatibility.MCClasses.InputConstants;
 import io.github.kurrycat.mpkmod.compatibility.MCClasses.Player;
+import io.github.kurrycat.mpkmod.settings.Settings;
 import io.github.kurrycat.mpkmod.ticks.ButtonMS;
 import io.github.kurrycat.mpkmod.ticks.ButtonMSList;
 import io.github.kurrycat.mpkmod.util.BoundingBox3D;
@@ -25,6 +26,7 @@ import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.Display;
 
 import java.util.Map;
 
@@ -45,21 +47,15 @@ public class EventListener {
             key = String.valueOf(c);
         }
 
-        GameSettings gameSettings = Minecraft.getMinecraft().gameSettings;
+        int[] keys = movementKeyCodes();
 
-        int[] keys = {
-                gameSettings.keyBindForward.getKeyCode(),
-                gameSettings.keyBindLeft.getKeyCode(),
-                gameSettings.keyBindBack.getKeyCode(),
-                gameSettings.keyBindRight.getKeyCode(),
-                gameSettings.keyBindSprint.getKeyCode(),
-                gameSettings.keyBindSneak.getKeyCode(),
-                gameSettings.keyBindJump.getKeyCode()
-        };
-
-        for (int i = 0; i < keys.length; i++)
-            if (keyCode == keys[i])
-                timeQueue.add(ButtonMS.of(ButtonMS.Button.values()[i], Keyboard.getEventNanoseconds(), pressed));
+        Long eventNanos = null;
+        for (int i = 0; i < keys.length; i++) {
+            if (keyCode == keys[i]) {
+                if (eventNanos == null) eventNanos = getEventNanos(keyCode, pressed);
+                timeQueue.add(ButtonMS.of(ButtonMS.Button.values()[i], eventNanos, pressed));
+            }
+        }
 
 
         API.Events.onKeyInput(InputConstants.convert(keyCode), key, pressed);
@@ -83,6 +79,49 @@ public class EventListener {
             checkKeyBinding(event.button - 100);
     }
 
+    /** In {@link ButtonMS.Button} order. */
+    private static int[] movementKeyCodes() {
+        return fillMovementKeyCodes(new int[7]);
+    }
+
+    private static int[] fillMovementKeyCodes(int[] keys) {
+        GameSettings gameSettings = Minecraft.getMinecraft().gameSettings;
+        keys[0] = gameSettings.keyBindForward.getKeyCode();
+        keys[1] = gameSettings.keyBindLeft.getKeyCode();
+        keys[2] = gameSettings.keyBindBack.getKeyCode();
+        keys[3] = gameSettings.keyBindRight.getKeyCode();
+        keys[4] = gameSettings.keyBindSprint.getKeyCode();
+        keys[5] = gameSettings.keyBindSneak.getKeyCode();
+        keys[6] = gameSettings.keyBindJump.getKeyCode();
+        return keys;
+    }
+
+    /** Prefers {@link WindowsKeyTimer}, as LWJGL event times are only ~15.6ms precise on Windows. */
+    private static long getEventNanos(int keyCode, boolean pressed) {
+        if (!WindowsKeyTimer.isRunning()) return Keyboard.getEventNanoseconds();
+
+        Long nanos = WindowsKeyTimer.take(keyCode, pressed);
+        // Missed by the sampler: fall back to the same clock
+        return nanos != null ? nanos : System.nanoTime();
+    }
+
+    private static final int[] keyTimerKeys = new int[7];
+
+    private static void updateKeyTimer() {
+        if (!WindowsKeyTimer.isRunning()) return;
+        Minecraft mc = Minecraft.getMinecraft();
+        boolean needed = Settings.renderLastTimingMS.getValue()
+                && Display.isActive()
+                && mc.currentScreen == null;
+        WindowsKeyTimer.update(fillMovementKeyCodes(keyTimerKeys), needed);
+    }
+
+    @SideOnly(Side.CLIENT)
+    @SubscribeEvent
+    public void onRenderTick(TickEvent.RenderTickEvent e) {
+        if (e.phase == TickEvent.Phase.START) updateKeyTimer();
+    }
+
     private void checkKeyBinding(int keyCode) {
         if (Minecraft.getMinecraft().currentScreen != null) return;
 
@@ -101,6 +140,8 @@ public class EventListener {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent e) {
+        if (e.phase == TickEvent.Phase.START) updateKeyTimer();
+
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.isGamePaused() || mc.theWorld == null) return;
         Entity cameraEntity = mc.getRenderViewEntity();
