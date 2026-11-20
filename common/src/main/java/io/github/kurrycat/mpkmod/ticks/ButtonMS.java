@@ -71,6 +71,10 @@ public class ButtonMS {
             return key;
         }
 
+        public boolean isMovement() {
+            return this == FORWARD || this == LEFT || this == BACKWARD || this == RIGHT;
+        }
+
         @Override
         public String toString() {
             return "Button." + key;

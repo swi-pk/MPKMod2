@@ -18,6 +18,20 @@ public final class TimingEntry {
     public final InputPredicateBase inputPredicate;
     public final Boolean P, N;
     public final GroundState G;
+    /** Measure ms between the movement and jump press within the matched tick (jam). */
+    public final boolean sameTickMS;
+
+    public TimingEntry(
+            String varName,
+            Integer min,
+            Integer max,
+            InputPredicateBase inputPredicate,
+            Boolean P,
+            Boolean N,
+            GroundState G
+    ) {
+        this(varName, min, max, inputPredicate, P, N, G, null);
+    }
 
     @JsonCreator
     public TimingEntry(
@@ -34,7 +48,9 @@ public final class TimingEntry {
             @JsonProperty("sneak")
             Boolean N,
             @JsonProperty("groundState")
-            GroundState G
+            GroundState G,
+            @JsonProperty("sameTickMS")
+            Boolean sameTickMS
     ) {
         if (min == null && max == null) min = max = 1;
         if (min == null || min <= 0) min = 0;
@@ -46,6 +62,7 @@ public final class TimingEntry {
         this.P = P;
         this.N = N;
         this.G = G;
+        this.sameTickMS = sameTickMS != null && sameTickMS;
     }
 
     public boolean varNameMatches(TimingEntry other) {
@@ -84,11 +101,11 @@ public final class TimingEntry {
                 vars.put(varName, new Timing.TickMS(count));
             }
 
-            vars.get(varName).ms = getMS(
-                    i - vars.get(varName).tickCount,
-                    vars.get(varName).tickCount,
-                    inputList
-            );
+            int varStart = i - vars.get(varName).tickCount;
+            int varCount = vars.get(varName).tickCount;
+            vars.get(varName).ms = sameTickMS
+                    ? getSameTickMS(varStart, varCount, inputList)
+                    : getMS(varStart, varCount, inputList);
         }
 
         return count;
@@ -119,11 +136,30 @@ public final class TimingEntry {
         return endMS.msFrom(startMS);
     }
 
+    /** Absolute ms between the last movement press and the jump press of a single tick, or null. */
+    private static Integer getSameTickMS(int startIndex, int matchCount, List<TimingInput> inputList) {
+        if (matchCount != 1 || startIndex < 0 || startIndex >= inputList.size())
+            return null;
+
+        ButtonMSList msList = inputList.get(startIndex).msList;
+        ButtonMS jump = msList.forKey(ButtonMS.Button.JUMP, true);
+        if (jump == null) return null;
+
+        ButtonMS move = null;
+        for (ButtonMS buttonMS : msList) {
+            if (buttonMS.isState(true) && buttonMS.getButton().isMovement())
+                move = buttonMS;
+        }
+        if (move == null) return null;
+
+        return Math.abs(jump.msFrom(move));
+    }
+
     public TimingEntry mirrored() {
         InputPredicateBase mirroredInputPredicate = inputPredicate;
         if (inputPredicate instanceof InputPredicate)
             mirroredInputPredicate = ((InputPredicate) inputPredicate).mirrored();
 
-        return new TimingEntry(varName, range.getLower(), range.getUpper(), mirroredInputPredicate, P, N, G);
+        return new TimingEntry(varName, range.getLower(), range.getUpper(), mirroredInputPredicate, P, N, G, sameTickMS);
     }
 }

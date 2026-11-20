@@ -105,6 +105,58 @@ public class TimingEntryTest {
     }
 
     @Test
+    void sameTickMsMeasuresMovementToJumpInsideTick() {
+        TimingEntry jam = new TimingEntry(
+                "j", null, null,
+                new InputPredicate("wasd?"),
+                null,
+                null,
+                GroundState.JUMPING,
+                true
+        );
+
+        List<TimingInput> inputList = new ArrayList<>();
+        inputList.add(TimingInput.stopTick());
+        inputList.add(new TimingInput(InputVector.fromString("WA"), false, false, GroundState.JUMPING));
+
+        // The last movement press (A) counts
+        inputList.get(1).msList.add(ButtonMS.down(ButtonMS.Button.JUMP, 10_000_000L));
+        inputList.get(1).msList.add(ButtonMS.down(ButtonMS.Button.FORWARD, 13_000_000L));
+        inputList.get(1).msList.add(ButtonMS.down(ButtonMS.Button.LEFT, 17_000_000L));
+
+        HashMap<String, Timing.TickMS> vars = new HashMap<>();
+        assertEquals(1, jam.matches(inputList, 1, vars, false));
+        assertEquals(7, vars.get("j").ms);
+    }
+
+    @Test
+    void sameTickMsIsNullWithoutJumpPress() {
+        TimingEntry jam = new TimingEntry(
+                "j", null, null,
+                new InputPredicate("wasd?"),
+                null,
+                null,
+                GroundState.JUMPING,
+                true
+        );
+
+        List<TimingInput> inputList = new ArrayList<>();
+        inputList.add(new TimingInput(InputVector.fromString("W"), false, false, GroundState.JUMPING));
+        inputList.get(0).msList.add(ButtonMS.down(ButtonMS.Button.FORWARD, 13_000_000L));
+
+        HashMap<String, Timing.TickMS> vars = new HashMap<>();
+        jam.matches(inputList, 0, vars, false);
+        assertNull(vars.get("j").ms);
+    }
+
+    @Test
+    void deserializesSameTickMs() throws IOException {
+        TimingEntry e = mapper.readValue("{\"sameTickMS\": true}", TimingEntry.class);
+        assertTrue(e.sameTickMS);
+        assertFalse(mapper.readValue("{}", TimingEntry.class).sameTickMS);
+    }
+
+    @Test
     void matchesMethodCreatesVariablesProperly() {
         HashMap<String, Timing.TickMS> vars = new HashMap<>();
 

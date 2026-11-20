@@ -128,11 +128,14 @@
   },
   "jam": {
     "format": {
-      "default": "Jam"
+      "default": "Jam",
+      "j_ms": " ({j_ms}ms)"
     },
     "timingEntries": [{
+      "var": "j",
       "inputs": "wasd?",
-      "groundState": "JUMPING"
+      "groundState": "JUMPING",
+      "sameTickMS": true
     }]
   },
   "hh": {
