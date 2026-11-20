@@ -74,8 +74,11 @@ public class LandingBlockGuiScreen extends ComponentScreen {
     @Override
     public void onGuiClosed() {
         super.onGuiClosed();
-        for (LBListItem item : lbList.getItems())
+        for (LBListItem item : lbList.getItems()) {
             item.landingBlock.highlight = false;
+            // Size or landing mode may have been edited
+            item.landingBlock.calculateWalls();
+        }
     }
 
     public void render(Vector2D mouse, float partialTicks) {
@@ -98,6 +101,7 @@ public class LandingBlockGuiScreen extends ComponentScreen {
                     } else {
                         lbs.add(new LandingBlock(new BoundingBox3D(new Vector3D(0, 0, 0), new Vector3D(0, 0, 0))));
                     }
+                    lbs.get(lbs.size() - 1).calculateWalls();
                     items.add(new LBListItem(this, lbs.get(lbs.size() - 1)));
                 }
             });

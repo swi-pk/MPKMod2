@@ -2,6 +2,7 @@ package io.github.kurrycat.mpkmod.landingblock;
 
 import io.github.kurrycat.mpkmod.compatibility.API;
 import io.github.kurrycat.mpkmod.compatibility.MCClasses.Player;
+import io.github.kurrycat.mpkmod.compatibility.MCClasses.WorldInteraction;
 import io.github.kurrycat.mpkmod.gui.infovars.InfoString;
 import io.github.kurrycat.mpkmod.util.BoundingBox3D;
 import io.github.kurrycat.mpkmod.util.Vector3D;
@@ -14,6 +15,9 @@ import java.util.stream.Collectors;
 @InfoString.DataClass
 public class LandingBlock {
     public static final int MAX_OFFSETS_SAVED = 500;
+    private static final double EPS = 1e-7;
+    private static final double PLAYER_HEIGHT = 1.8;
+    private static final double PLAYER_WIDTH = 0.6;
     public LandingMode landingMode = LandingMode.LAND;
     @InfoString.Field
     public BoundingBox3D boundingBox;
@@ -33,6 +37,10 @@ public class LandingBlock {
     public Double pbTotalOffset = null;
 
     public long lastTimeOffsetSaved = 0;
+
+    // How much walls next to each edge shrink the landable area, see calculateWalls
+    private double wallMinX = 0, wallMaxX = 0, wallMinZ = 0, wallMaxZ = 0;
+    private boolean wallsCalculated = false;
 
     public static List<LandingBlock> asLandingBlocks(List<BoundingBox3D> collisionBoundingBoxes) {
         return collisionBoundingBoxes.stream().map(LandingBlock::new).collect(Collectors.toCollection(ArrayList<LandingBlock>::new));
@@ -60,6 +68,9 @@ public class LandingBlock {
 
         Vector3D offset = boundingBox.distanceTo(playerBB).mult(-1D);
         if (offset.getX() <= -0.3F || offset.getZ() <= -0.3F) return null;
+        // Landing blocks not set by the player (e.g. by a server) are calculated on first landing
+        if (!wallsCalculated) calculateWalls();
+        offset = applyWalls(offset, playerBB);
 
         offsets.add(offset);
         while (offsets.size() > MAX_OFFSETS_SAVED)
@@ -76,6 +87,79 @@ public class LandingBlock {
         lastTimeOffsetSaved = API.tickTime;
 
         return offset.copy();
+    }
+
+    /**
+     * Finds blocks at player height next to the landing block (like a neo wall). They keep the
+     * player's whole hitbox from reaching over that edge, so the offset on that side shrinks.
+     * Call when the landing block is set or edited.
+     */
+    public void calculateWalls() {
+        BoundingBox3D playerBB = Player.getLatest() == null ? null : Player.getLatest().getBoundingBox();
+        double height = playerBB == null ? PLAYER_HEIGHT : playerBB.maxY() - playerBB.minY();
+        double width = playerBB == null ? PLAYER_WIDTH : playerBB.maxX() - playerBB.minX();
+        double surfaceY = landingMode == LandingMode.ENTER ? boundingBox.minY() : boundingBox.maxY();
+
+        wallMinX = wallAdjust(true, true, surfaceY, height, width);
+        wallMaxX = wallAdjust(true, false, surfaceY, height, width);
+        wallMinZ = wallAdjust(false, true, surfaceY, height, width);
+        wallMaxZ = wallAdjust(false, false, surfaceY, height, width);
+        wallsCalculated = true;
+    }
+
+    private Vector3D applyWalls(Vector3D offset, BoundingBox3D playerBB) {
+        double x = axisOffset(boundingBox.minX(), boundingBox.maxX(), playerBB.minX(), playerBB.maxX(), wallMinX, wallMaxX);
+        double z = axisOffset(boundingBox.minZ(), boundingBox.maxZ(), playerBB.minZ(), playerBB.maxZ(), wallMinZ, wallMaxZ);
+        return new Vector3D(x, offset.getY(), z);
+    }
+
+    /** Offset on one axis from the limiting edge; equals the plain overlap when both adjustments are 0. */
+    static double axisOffset(double lbMin, double lbMax, double pMin, double pMax, double adjMin, double adjMax) {
+        double fromMin = pMax - lbMin + adjMin;
+        double fromMax = lbMax - pMin + adjMax;
+        if (fromMax > Math.abs(fromMin)) return fromMin;
+        if (fromMin > Math.abs(fromMax)) return fromMax;
+        return Math.max(fromMin, fromMax);
+    }
+
+    /**
+     * How much a wall next to one edge shrinks the landable area (0 or negative).
+     * A wall must span the whole edge and be closer than the player's size to it.
+     */
+    private double wallAdjust(boolean xAxis, boolean minSide, double surfaceY, double height, double playerSize) {
+        double edge = xAxis ? (minSide ? boundingBox.minX() : boundingBox.maxX())
+                : (minSide ? boundingBox.minZ() : boundingBox.maxZ());
+        double spanMin = xAxis ? boundingBox.minZ() : boundingBox.minX();
+        double spanMax = xAxis ? boundingBox.maxZ() : boundingBox.maxX();
+
+        int fromCol = (int) Math.floor(minSide ? edge - playerSize : edge);
+        int toCol = (int) Math.floor(minSide ? edge : edge + playerSize);
+        // Start one block lower for hitboxes taller than a block (fences, walls)
+        int fromY = (int) Math.floor(surfaceY) - 1;
+        int toY = (int) Math.floor(surfaceY + height - EPS);
+
+        double adjust = 0;
+        for (int col = fromCol; col <= toCol; col++) {
+            for (int span = (int) Math.floor(spanMin); span <= (int) Math.floor(spanMax - EPS); span++) {
+                for (int y = fromY; y <= toY; y++) {
+                    Vector3D pos = xAxis ? new Vector3D(col, y, span) : new Vector3D(span, y, col);
+                    for (BoundingBox3D box : WorldInteraction.getCollisionBoundingBoxes(pos)) {
+                        if (box.maxY() <= surfaceY + EPS || box.minY() >= surfaceY + height - EPS) continue;
+
+                        double boxSpanMin = xAxis ? box.minZ() : box.minX();
+                        double boxSpanMax = xAxis ? box.maxZ() : box.maxX();
+                        if (boxSpanMin > spanMin + EPS || boxSpanMax < spanMax - EPS) continue;
+
+                        double gap = minSide ? edge - (xAxis ? box.maxX() : box.maxZ())
+                                : (xAxis ? box.minX() : box.minZ()) - edge;
+                        if (gap < -EPS || gap >= playerSize) continue;
+
+                        adjust = Math.min(adjust, gap - playerSize);
+                    }
+                }
+            }
+        }
+        return adjust;
     }
 
     public boolean isTryingToLandOn() {

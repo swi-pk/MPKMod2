@@ -53,7 +53,10 @@ public class Main implements MPKModule {
                     lbs.forEach(lb -> {
                         if (LandingBlockGuiScreen.lbs.contains(lb))
                             LandingBlockGuiScreen.lbs.remove(lb);
-                        else LandingBlockGuiScreen.lbs.add(lb);
+                        else {
+                            lb.calculateWalls();
+                            LandingBlockGuiScreen.lbs.add(lb);
+                        }
                     });
                 }
         );
