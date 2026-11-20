@@ -27,6 +27,10 @@ public class LandingBlock {
     public Vector3D pbX = null;
     @InfoString.Field
     public Vector3D pbZ = null;
+    @InfoString.Field
+    public Double totalOffset = null;
+    @InfoString.Field
+    public Double pbTotalOffset = null;
 
     public long lastTimeOffsetSaved = 0;
 
@@ -61,9 +65,10 @@ public class LandingBlock {
         while (offsets.size() > MAX_OFFSETS_SAVED)
             offsets.remove(0);
 
-        if (pb == null) pb = offset;
-        else if (calculateOffsetDist(offset) > calculateOffsetDist(pb)) {
+        totalOffset = totalOffset(offset);
+        if (pb == null || totalOffset > pbTotalOffset) {
             pb = offset;
+            pbTotalOffset = totalOffset;
         }
         if (pbX == null || offset.getX() > pbX.getX()) pbX = offset;
         if (pbZ == null || offset.getZ() > pbZ.getZ()) pbZ = offset;
@@ -85,7 +90,8 @@ public class LandingBlock {
             return playerBB.minY() < boundingBox.maxY() && playerBB.minY() >= boundingBox.minY() && playerBB.minY() < lastPlayerBB.minY();
     }
 
-    private double calculateOffsetDist(Vector3D offset) {
+    /** Corner distance if both axes are on or both off the block, otherwise the missed axis' offset. */
+    public static double totalOffset(Vector3D offset) {
         double xSign = Math.signum(offset.getX());
         double zSign = Math.signum(offset.getZ());
 
