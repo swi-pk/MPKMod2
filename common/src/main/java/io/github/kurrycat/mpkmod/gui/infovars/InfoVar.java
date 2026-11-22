@@ -44,7 +44,6 @@ public class InfoVar {
     }
 
     public Object getObj() {
-        Object o = InfoString.getObj(objects);
-        return o != null ? o : "undefined";
+        return InfoString.getObj(objects);
     }
 }

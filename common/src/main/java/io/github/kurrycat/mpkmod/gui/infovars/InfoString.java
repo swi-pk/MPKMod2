@@ -269,7 +269,7 @@ public class InfoString {
             if(this.infoVar == null) return fullMatch;
             Object o = this.infoVar.getObj();
 
-            if (o == null) return fullMatch;
+            if (o == null) return "-";
 
             if (o instanceof Double)
                 return MathUtil.formatDecimals((Double) o, decimals, keepZeros);
