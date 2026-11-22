@@ -177,7 +177,7 @@ public class Main implements MPKModule {
                                         mainGUI.postMessage(
                                                 "offset",
                                                 MathUtil.formatDecimals(total, 5, false),
-                                                total > 0
+                                                total >= 0
                                         );
                                     });
                             Profiler.endSection();

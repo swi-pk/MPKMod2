@@ -181,16 +181,17 @@ public class LandingBlock {
             return playerBB.minY() < boundingBox.maxY() && playerBB.minY() >= boundingBox.minY() && playerBB.minY() < lastPlayerBB.minY();
     }
 
-    /** Corner distance if both axes are on or both off the block, otherwise the missed axis' offset. */
+    /**
+     * Signed distance to the landing edge: the missed axis' offset or the corner distance on a miss,
+     * the closest edge (smaller axis) on a landing.
+     */
     public static double totalOffset(Vector3D offset) {
         double x = offset.getX();
         double z = offset.getZ();
 
         // Only a negative axis is missed, so 0 (flush against a wall) still lands
         if (x < 0 && z < 0) return -offset.lengthXZ();
-        if (x < 0) return x;
-        if (z < 0) return z;
-        return offset.lengthXZ();
+        return Math.min(x, z);
     }
 
     @Override

@@ -35,7 +35,7 @@ public class LandingBlockTest {
         double z = -359.7;
         double offset = LandingBlock.axisOffset(-360, -359, z - 0.3, z + 0.3, -0.6, 0);
         assertEquals(0, offset);
-        assertEquals(0.8, LandingBlock.totalOffset(new Vector3D(0.8, 0, offset)), DELTA);
+        assertEquals(0, LandingBlock.totalOffset(new Vector3D(0.8, 0, offset)));
     }
 
     @Test
@@ -49,10 +49,19 @@ public class LandingBlockTest {
 
     @Test
     void totalOffsetCountsZeroAsLanded() {
-        assertEquals(0.77528, LandingBlock.totalOffset(new Vector3D(0.77528, 0, 0)), DELTA);
-        assertEquals(0.5, LandingBlock.totalOffset(new Vector3D(0.3, 0, 0.4)), DELTA);
+        assertEquals(0, LandingBlock.totalOffset(new Vector3D(0.77528, 0, 0)));
+        assertEquals(0.3, LandingBlock.totalOffset(new Vector3D(0.3, 0, 0.4)), DELTA);
         assertEquals(-0.1, LandingBlock.totalOffset(new Vector3D(-0.1, 0, 0.4)), DELTA);
         assertEquals(-0.5, LandingBlock.totalOffset(new Vector3D(-0.3, 0, -0.4)), DELTA);
+    }
+
+    @Test
+    void totalOffsetOnLandingIsClosestEdge() {
+        // Barely made on Z while deep in on X
+        assertEquals(0.00294, LandingBlock.totalOffset(new Vector3D(0.79954, 0, 0.00294)), DELTA);
+        // Continuous across the edge: just missed and just made are both close to 0
+        assertEquals(-0.001, LandingBlock.totalOffset(new Vector3D(0.79954, 0, -0.001)), DELTA);
+        assertEquals(0.001, LandingBlock.totalOffset(new Vector3D(0.79954, 0, 0.001)), DELTA);
     }
 
     @Test
