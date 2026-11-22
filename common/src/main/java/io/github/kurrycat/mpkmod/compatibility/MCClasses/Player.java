@@ -164,11 +164,7 @@ public class Player {
                 ((keyInput.forward ? "W" : "") +
                         (keyInput.left ? "A" : "") +
                         (keyInput.back ? "S" : "") +
-                        (keyInput.right ? "D" : "") +
-                        (keyInput.sprint ? "P" : "") +
-                        (keyInput.sneak ? "N" : "") +
-                        (keyInput.jump ? "J" : "")
-                );
+                        (keyInput.right ? "D" : ""));
     }
 
     @InfoString.Getter
