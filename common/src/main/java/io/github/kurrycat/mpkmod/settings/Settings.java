@@ -25,6 +25,13 @@ public class Settings {
             false
     );
 
+    public static BooleanSetting moreTimings = new BooleanSetting(
+            "moreTimings",
+            "More Timings",
+            "Detect pessi marks, pessi FMMs and marks with A/D held before the jump. Turn off to use slightly less CPU",
+            true
+    );
+
     public static BooleanSetting highlightLandingBlocks = new BooleanSetting(
             "highlightLandingBlocks",
             "Highlight Landing Blocks",

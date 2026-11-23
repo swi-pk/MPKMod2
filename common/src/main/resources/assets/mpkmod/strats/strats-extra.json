@@ -1,0 +1,164 @@
+{
+  "mark": {
+    "format": {
+      "default": "{a}t Mark"
+    },
+    "timingEntries": [{
+      "min": 0,
+      "inputs": "D",
+      "groundState": "GROUNDED"
+    }, {
+      "var": "a",
+      "inputs": "D",
+      "groundState": "JUMPING"
+    }, {
+      "var": "a", "min": 0,
+      "inputs": "D",
+      "groundState": "AIRBORNE"
+    }, {
+      "inputs": "WD",
+      "groundState": "AIRBORNE"
+    }],
+    "symmetrical": true
+  },
+  "markrun": {
+    "format": {
+      "default": "{a}t Mark Run {r}t"
+    },
+    "timingEntries": [{
+      "min": 0,
+      "inputs": "D",
+      "groundState": "GROUNDED"
+    }, {
+      "var": "a",
+      "inputs": "D",
+      "groundState": "JUMPING"
+    }, {
+      "var": "a", "min": 0,
+      "inputs": "D",
+      "groundState": "AIRBORNE"
+    }, {
+      "min": 0,
+      "inputs": "WD",
+      "groundState": "AIRBORNE"
+    }, {
+      "inputs": "WD",
+      "groundState": "GROUNDED"
+    }, {
+      "var": "r", "min": 1,
+      "inputs": "WD",
+      "groundState": "GROUNDED"
+    }, {
+      "inputs": "Wad",
+      "groundState": "JUMPING"
+    }],
+    "symmetrical": true
+  },
+  "pessifmm": {
+    "format": {
+      "k==0": "A7HH",
+      "k!=0&&p==1": "Max ",
+      "k!=0": "Pessi",
+      "k!=0&&p!=1": " -{p}t",
+      "default and": " ",
+      "f==1": "Max ",
+      "default fmm": "FMM",
+      "f!=1": " {f}t",
+      "f_ms": " ({f_ms}ms)"
+    },
+    "timingEntries": [{
+      "var": "p",
+      "inputs": "",
+      "groundState": "JUMPING"
+    }, {
+      "var": "p", "min": 0,
+      "inputs": "",
+      "groundState": "AIRBORNE"
+    }, {
+      "var": "k", "min": 0,
+      "inputs": "Wad",
+      "groundState": "AIRBORNE"
+    }, {
+      "inputs": 2,
+      "groundState": "GROUNDED"
+    }, {
+      "var": "f",
+      "inputs": "Wad",
+      "sprint": false,
+      "groundState": "JUMPING"
+    }, {
+      "var": "f", "min": 0,
+      "inputs": 4,
+      "sprint": false,
+      "groundState": "AIRBORNE"
+    }, {
+      "min": 1,
+      "inputs": 4,
+      "sprint": true,
+      "groundState": "AIRBORNE"
+    }]
+  },
+  "pessithenmark": {
+    "format": {
+      "k==0": "A7HH",
+      "k!=0&&p==1": "Max ",
+      "k!=0": "Pessi",
+      "k!=0&&p!=1": " -{p}t",
+      "default mark": " {a}t Mark"
+    },
+    "timingEntries": [{
+      "var": "p",
+      "inputs": "",
+      "groundState": "JUMPING"
+    }, {
+      "var": "p", "min": 0,
+      "inputs": "",
+      "groundState": "AIRBORNE"
+    }, {
+      "var": "k", "min": 0,
+      "inputs": "D",
+      "groundState": "AIRBORNE"
+    }, {
+      "min": 1,
+      "inputs": "D",
+      "groundState": "GROUNDED"
+    }, {
+      "var": "a",
+      "inputs": "D",
+      "groundState": "JUMPING"
+    }, {
+      "var": "a", "min": 0,
+      "inputs": "D",
+      "groundState": "AIRBORNE"
+    }, {
+      "inputs": "WD",
+      "groundState": "AIRBORNE"
+    }],
+    "symmetrical": true
+  },
+  "pessimark": {
+    "format": {
+      "p==1": "Max ",
+      "default": "Pessi",
+      "p!=1": " -{p}t",
+      "default mark": " {a}t Mark"
+    },
+    "timingEntries": [{
+      "var": "p",
+      "inputs": "",
+      "groundState": "JUMPING"
+    }, {
+      "var": "p", "min": 0,
+      "inputs": "",
+      "groundState": "AIRBORNE"
+    }, {
+      "var": "a", "min": 1,
+      "inputs": "D",
+      "groundState": "AIRBORNE"
+    }, {
+      "inputs": "WD",
+      "groundState": "AIRBORNE"
+    }],
+    "symmetrical": true
+  }
+}

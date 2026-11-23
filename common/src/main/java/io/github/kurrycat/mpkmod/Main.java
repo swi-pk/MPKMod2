@@ -40,7 +40,7 @@ public class Main implements MPKModule {
         infoTree = InfoString.createInfoTree();
         API.LOGGER.info("{} infoVars registered", infoTree.getSize());
 
-        TimingStorage.init();
+        Settings.moreTimings.onChange(s -> TimingStorage.init());
 
         mainGUI = new MainGuiScreen();
         API.registerGUIScreen("main_gui", mainGUI);
@@ -68,6 +68,8 @@ public class Main implements MPKModule {
 
     @Override
     public void loaded() {
+        // Settings are loaded by now, so moreTimings is known
+        TimingStorage.init();
         LabelConfiguration.init();
         EventAPI.init();
 
